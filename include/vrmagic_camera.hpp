@@ -3,17 +3,21 @@
 
 #include <string>
 
+#include <boost/thread.hpp>
+
 #include <ros/ros.h>
 
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/fill_image.h>
+
 #include <camera_info_manager/camera_info_manager.h>
 #include <image_transport/image_transport.h>
 
 #include "vrmusbcam2.h"
 
 const std::string frame_id = "VRMAGIC";
+const unsigned int NUMBER_OF_SENSORS = 2;
 const unsigned int width = 754;
 const unsigned int height = 480;
 
@@ -33,14 +37,14 @@ class VrMagicCamera {
 
   ~VrMagicCamera();
 
+  void initCamera();
   void broadcastFrame();
   void grabFrame(VRmDWORD port, sensor_msgs::Image &img, const ros::Time &triggerTime);
   void spin();
 
  private:
-  void initCamera();
-
   VRmUsbCamDevice device;
+  VRmImageFormat target_format;
 
   ros::NodeHandle nh;
   ros::NodeHandle leftNs;   // private node handle

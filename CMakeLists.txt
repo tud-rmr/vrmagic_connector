@@ -35,10 +35,15 @@ link_directories(
     ${Boost_LIBRARY_DIR}
 )
 
-file(GLOB source_files "src/*.cpp" )
+set(${PROJECT_NAME}_SOURCES
+    src/main.cpp
+    src/camera_handle.cpp
+    src/vrmagic_camera.cpp
+)
+
 
 ## Declare a cpp executable
-add_executable(vrmagic_camera_node  ${source_files})
+add_executable(vrmagic_camera_node  ${${PROJECT_NAME}_SOURCES})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(vrmagic_camera_node
@@ -47,6 +52,7 @@ target_link_libraries(vrmagic_camera_node
    ${Boost_LIBRARIES}
    
 )
+
 
 #############
 ## Install ##

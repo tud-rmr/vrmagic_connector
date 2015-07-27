@@ -28,8 +28,6 @@ VrMagicCamera::VrMagicCamera(const ros::NodeHandle &nh_) {
 
   cinfo_left = new CameraInfoManager(leftNs, camera_name_left, cameraConfUrlLeft);
   cinfo_right = new CameraInfoManager(rightNs, camera_name_right, cameraConfUrlRight);
-
-  initCamera();
 }
 
 VrMagicCamera::~VrMagicCamera() {
@@ -87,6 +85,48 @@ void VrMagicCamera::initCamera() {
   if (!VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_MODE_E, &mode))
     throw VRControlException(
         "failed to set software trigger (VRM_PROPID_GRAB_MODE_TRIGGERED_SOFT).");
+
+  // init camera
+  VRmDWORD port = 0;  // id of Sensor //for multisensorunits
+
+  VRmBOOL supported;
+  // check number of connected sensors
+  VRmDWORD num_sensorports = 0;
+  VRmUsbCamGetSensorPortListSize(device, &num_sensorports);
+  std::cout << "Found " << num_sensorports << " sensors" << std::endl;
+
+  if (num_sensorports != NUMBER_OF_SENSORS) {
+    throw VRControlException("This program needs exactly 2 sensors attached!");
+  }
+
+  VRmDWORD ports[NUMBER_OF_SENSORS];
+  // for this demo all sensors are used
+  for (VRmDWORD ii = 0; ii < NUMBER_OF_SENSORS; ii++) {
+    VRmUsbCamGetSensorPortListEntry(device, ii, &port);
+
+    // on single sensor devices this property does not exist
+    VRmPropId sensor_enable = (VRmPropId)(VRM_PROPID_GRAB_SENSOR_ENABLE_1_B - 1 + port);
+    VRmUsbCamGetPropertySupported(device, sensor_enable, &supported);
+    if (supported) {
+      VRmBOOL enable = 1;
+      VRmUsbCamSetPropertyValueB(device, sensor_enable, &enable);
+      // now get all sensor port
+      VRmUsbCamGetSensorPortListEntry(device, ii, &ports[ii]);
+      ROS_INFO("PORT: %d is used", ports[ii]);
+    }
+  }
+
+  VRmUsbCamGetPropertySupported(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &supported);
+  float value = 0.f;
+  VRmUsbCamGetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value);
+  std::cout << "ExposureTime: " << value << "ms, changeable: " << (supported ? "true" : "false")
+            << std::endl;
+
+  if (supported) {
+    value = 5.f;
+    VRmUsbCamSetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value);
+    std::cout << "ExposureTime changed to: " << value << "ms" << std::endl;
+  }
 
   if (!VRmUsbCamStart(device)) throw VRControlException("VRmUsbCamStart failed.");
 }

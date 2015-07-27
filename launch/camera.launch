@@ -1,0 +1,9 @@
+<launch>
+  <node name="vrmagic" pkg="vrmagic_camera" type="vrmagic_camera_node" output="screen">
+	  <param name="sensor_left" value="1" />
+	  <param name="sensor_right" value="3" />
+	  <param name="camera_settings_url_left" value="vrmagic_left.yaml" />
+	  <param name="camera_settings_url_right" value="vrmagic_left.yaml" />
+  </node>
+
+</launch>

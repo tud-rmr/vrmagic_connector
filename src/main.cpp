@@ -15,10 +15,11 @@ int main(int argc, char *argv[]) {
     nh.param("camera_settings_url_right", cameraConfUrlRight, std::string("vrmagic_left.yaml"));
   */
 
-  VrMagicCameraHandle cam;
-  cam.init();
+  VrMagicCameraHandle *cam = new VrMagicCameraHandle();
 
   VrMagicCamera node(nh, cam);
 
   node.spin();
+
+  delete cam;
 }

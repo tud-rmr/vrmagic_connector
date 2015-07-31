@@ -16,24 +16,23 @@ class VrMagicCameraHandle {
   VrMagicCameraHandle();
   ~VrMagicCameraHandle();
 
-  void init();
   void grabFrame(VRmDWORD port, sensor_msgs::Image& img, const ros::Time& triggerTime);
 
  private:
   VRmUsbCamDevice device;
+  VRmImageFormat sourceFormat;
   VRmImageFormat targetFormat;
-
-  VRmImage* sourceImg;
-  VRmImage* targetImg;
 
   int width;
   int height;
+
+  void initCamera();
 
   void initSensors();
   void setProperties();
   void setTargetFormat();
   void startCamera();
-  void prepareGrabbing();
+  void fillImageMessage(sensor_msgs::Image& img);
 };
 
 #endif

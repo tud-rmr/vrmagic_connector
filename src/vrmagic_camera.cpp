@@ -8,7 +8,7 @@
 
 using camera_info_manager::CameraInfoManager;
 
-VrMagicCamera::VrMagicCamera(const ros::NodeHandle &nh_, VrMagicCameraHandle cam_) {
+VrMagicCamera::VrMagicCamera(const ros::NodeHandle &nh_, VrMagicCameraHandle *cam_) {
   nh = nh_;
   cam = cam_;
 
@@ -36,8 +36,8 @@ VrMagicCamera::~VrMagicCamera() {
 void VrMagicCamera::broadcastFrame() {
   ros::Time triggerTime = ros::Time::now();
 
-  cam.grabFrame(1, leftImageMsg, triggerTime);
-  cam.grabFrame(3, rightImageMsg, triggerTime);
+  cam->grabFrame(1, leftImageMsg, triggerTime);
+  cam->grabFrame(3, rightImageMsg, triggerTime);
 
   leftCamInfo.header.stamp = triggerTime;
   leftCamInfo.header.frame_id = frameId;

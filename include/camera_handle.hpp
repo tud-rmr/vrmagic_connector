@@ -23,9 +23,6 @@ class VrMagicCameraHandle {
   VRmImageFormat sourceFormat;
   VRmImageFormat targetFormat;
 
-  int width;
-  int height;
-
   void initCamera();
 
   void initSensors();

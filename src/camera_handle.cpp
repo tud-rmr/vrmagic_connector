@@ -180,7 +180,7 @@ void VrMagicCameraHandle::grabFrame(VRmDWORD port,
     // Fill in the image message with the converted frame from the camera
     img.width = targetImage->m_image_format.m_width;
     img.height = targetImage->m_image_format.m_height;
-    img.step = targetImage->m_pitch;
+    img.step = img.width * 3;  // width * byte per pixel
     img.encoding = sensor_msgs::image_encodings::BGR8;
     img.data.resize(img.height * img.step);
     img.header.stamp = triggerTime;

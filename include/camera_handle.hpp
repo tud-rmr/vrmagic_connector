@@ -9,6 +9,8 @@
 
 #include "vrmusbcam2.h"
 
+const std::string frameId("VRMAGIC");
+
 class VrMagicCameraHandle {
  public:
   VrMagicCameraHandle();

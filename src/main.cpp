@@ -7,21 +7,18 @@ int main(int argc, char *argv[]) {
   ros::init(argc, argv, "vrmagic_camera");
   ros::NodeHandle nh("vrmagic");
 
+  /*
+    nh.param<int>("camera_port", cameraPort, 1);
+    nh.param<int>("sensor_left", portLeft, 1);
+    nh.param<int>("sensor_right", portRight, 3);
+    nh.param("camera_settings_url_left", cameraConfUrlLeft, std::string("vrmagic_left.yaml"));
+    nh.param("camera_settings_url_right", cameraConfUrlRight, std::string("vrmagic_left.yaml"));
+  */
+
   VrMagicCameraHandle cam;
   cam.init();
 
-  ros::Time triggerTime = ros::Time::now();
-  sensor_msgs::Image img;
+  VrMagicCamera node(nh, cam);
 
-  cam.grabFrame(1, img, triggerTime);
-
-  // VrMagicCamera node(nh);
-  // try {
-  //   node.initCamera();
-  // } catch (VRControlException &ex) {
-  //   std::cerr << ex << std::endl;
-  //   ros::shutdown();
-  // }
-
-  // node.spin();
+  node.spin();
 }

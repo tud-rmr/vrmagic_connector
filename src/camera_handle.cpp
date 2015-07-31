@@ -11,7 +11,12 @@ static const int NUMBER_OF_SENSORS = 2;
 static const float EXPOSURE_TIME = 5.f;
 static const int PORT_LEFT = 1;
 static const int PORT_RIGHT = 3;
-static const std::string frameId("VRMAGIC");
+
+#define CHECK(C, M)                               \
+  if (!(C)) {                                     \
+    ROS_ERROR(M ": %s", VRmUsbCamGetLastError()); \
+    exit(EXIT_FAILURE);                           \
+  }
 
 VrMagicCameraHandle::VrMagicCameraHandle() {}
 
@@ -39,12 +44,15 @@ void VrMagicCameraHandle::init() {
     exit(EXIT_FAILURE);
   }
 
-  device = 0;
-  VRmDeviceKey* p_device_key = 0;
-  // open device
-  VRmUsbCamGetDeviceKeyListEntry(0, &p_device_key);
-  if (!p_device_key->m_busy) {
-    VRmUsbCamOpenDevice(p_device_key, &device);
+  VRmDeviceKey* devKey = 0;
+  CHECK(VRmUsbCamGetDeviceKeyListEntry(0, &devKey), "Could not get device key list");
+
+  if (!devKey->m_busy) {
+    CHECK(VRmUsbCamOpenDevice(devKey, &device), "Could not open device");
+    ROS_INFO("Opened device:");
+    ROS_INFO("Manufacturer : %s", devKey->mp_manufacturer_str);
+    ROS_INFO("Product: %s", devKey->mp_product_str);
+    ROS_INFO("S/N: %d", devKey->m_serial);
   }
 
   // display error when no camera has been found
@@ -53,7 +61,7 @@ void VrMagicCameraHandle::init() {
     exit(EXIT_FAILURE);
   }
 
-  ROS_INFO("Open deivce succesful");
+  ROS_INFO("Opened device succesfully");
 
   // init camera
   VRmImageFormat targetFormat;
@@ -81,10 +89,10 @@ void VrMagicCameraHandle::init() {
     VRmUsbCamGetPropertySupported(device, sensor_enable, &supported);
     if (supported) {
       VRmBOOL enable = 1;
-      VRmUsbCamSetPropertyValueB(device, sensor_enable, &enable);
+      CHECK(VRmUsbCamSetPropertyValueB(device, sensor_enable, &enable), "Cannot open port");
       // now get all sensor port
-      VRmUsbCamGetSensorPortListEntry(device, ii, &ports[ii]);
-      ROS_INFO("PORT: %d is used", ports[ii]);
+      CHECK(VRmUsbCamGetSensorPortListEntry(device, ii, &ports[ii]), "Cannot get port entry");
+      ROS_INFO("PORT: %d will be used", ports[ii]);
     }
   }
 
@@ -96,14 +104,17 @@ void VrMagicCameraHandle::init() {
 
 void VrMagicCameraHandle::setProperties() {
   VRmBOOL supported;
-  VRmUsbCamGetPropertySupported(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &supported);
+  CHECK(VRmUsbCamGetPropertySupported(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &supported),
+        "Cannot check property support");
   float value = 0.f;
-  VRmUsbCamGetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value);
+  CHECK(VRmUsbCamGetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value),
+        "Cannot get property");
   ROS_INFO("ExposureTime: %f ms, changeable: %s", value, (supported ? "true" : "false"));
 
   if (supported) {
     value = EXPOSURE_TIME;
-    VRmUsbCamSetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value);
+    CHECK(VRmUsbCamSetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value),
+          "Cannot get property");
     ROS_INFO("ExposureTime changed to: %f ms", value);
   }
 }
@@ -112,7 +123,8 @@ void VrMagicCameraHandle::setTargetFormat() {
   VRmDWORD number_of_targetFormats, i;
   VRmSTRING imageFormatString;
 
-  VRmUsbCamGetTargetFormatListSizeEx2(device, PORT_LEFT, &number_of_targetFormats);
+  CHECK(VRmUsbCamGetTargetFormatListSizeEx2(device, PORT_LEFT, &number_of_targetFormats),
+        "Cannot get target format list");
   for (i = 0; i < number_of_targetFormats; ++i) {
     VRmUsbCamGetTargetFormatListEntryEx2(device, PORT_LEFT, i, &targetFormat);
 
@@ -127,16 +139,18 @@ void VrMagicCameraHandle::setTargetFormat() {
 
 void VrMagicCameraHandle::startCamera() {
   ROS_INFO("Start camera");
-  VRmUsbCamResetFrameCounter(device);
-  VRmUsbCamStart(device);
+
+  CHECK(VRmUsbCamResetFrameCounter(device), "Error at resetting frame counter");
+  CHECK(VRmUsbCamStart(device), "Error while starting camera");
 }
 
 void VrMagicCameraHandle::prepareGrabbing() {
   ROS_INFO("Prepare grabbing");
-  VRmUsbCamNewImage(&targetImg, targetFormat);
+  CHECK(VRmUsbCamNewImage(&targetImg, targetFormat), "Could not create new image");
 
   VRmSTRING imageFormatString;
-  VRmUsbCamGetStringFromColorFormat(targetFormat.m_color_format, &imageFormatString);
+  CHECK(VRmUsbCamGetStringFromColorFormat(targetFormat.m_color_format, &imageFormatString),
+        "Could not generate string from color format");
 
   ROS_INFO("Color format: %s", imageFormatString);
   ROS_INFO("Width: %d", targetImg->m_image_format.m_width);
@@ -145,22 +159,44 @@ void VrMagicCameraHandle::prepareGrabbing() {
   ROS_INFO("Image pitch: %d", targetImg->m_pitch);
 }
 
+char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+std::string hexStr(unsigned char* data, int len) {
+  std::string s(len * 2, ' ');
+  for (int i = 0; i < len; ++i) {
+    s[2 * i] = hexmap[(data[i] & 0xF0) >> 4];
+    s[2 * i + 1] = hexmap[data[i] & 0x0F];
+  }
+  return s;
+}
+
 void VrMagicCameraHandle::grabFrame(VRmDWORD port,
                                     sensor_msgs::Image& img,
                                     const ros::Time& triggerTime) {
   VRmDWORD framesDropped;
+  VRmRetVal success;
 
   img.width = targetImg->m_image_format.m_width;
   img.height = targetImg->m_image_format.m_height;
   img.step = targetImg->m_pitch;
   img.encoding = sensor_msgs::image_encodings::BGR8;
-  img.data.resize(img.width * img.step);
+  img.data.resize(img.height * img.step);
   img.header.stamp = triggerTime;
   img.header.frame_id = frameId;
 
-  VRmRetVal success = VRmUsbCamLockNextImageEx(device, port, &sourceImg, NULL);
-  VRmUsbCamUnlockNextImage(device, &sourceImg);
-  VRmUsbCamConvertImage(sourceImg, targetImg);
+  ROS_INFO("Port %d", port);
+
+  CHECK(VRmUsbCamLockNextImageEx(device, port, &sourceImg, &framesDropped),
+        "Error at locking image");
+
+  success = VRmUsbCamConvertImage(sourceImg, targetImg);
+  if (!success) {
+    ROS_ERROR("Error at converting image: %s", VRmUsbCamGetLastError());
+  }
+
+  std::string deb = hexStr(targetImg->mp_buffer, 100);
+
+  // ROS_INFO("Hex: %s", deb.c_str());
 
   for (unsigned int y = 0; y < img.height; y++) {
     for (unsigned int x = 0; x < img.width * 3; x++) {
@@ -169,6 +205,11 @@ void VrMagicCameraHandle::grabFrame(VRmDWORD port,
   }
 
   if (framesDropped) {
-    ROS_WARN("Frames dropped: %d", framesDropped);
+    // ROS_WARN("Frames dropped: %d", framesDropped);
+  }
+
+  success = VRmUsbCamUnlockNextImage(device, &sourceImg);
+  if (!success) {
+    ROS_ERROR("Error at unlocking image: %s", VRmUsbCamGetLastError());
   }
 }

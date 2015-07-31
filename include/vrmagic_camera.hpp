@@ -14,12 +14,7 @@
 #include <camera_info_manager/camera_info_manager.h>
 #include <image_transport/image_transport.h>
 
-#include "vrmusbcam2.h"
-
-const std::string frame_id = "VRMAGIC";
-const unsigned int NUMBER_OF_SENSORS = 2;
-const unsigned int width = 754;
-const unsigned int height = 480;
+#include "camera_handle.hpp"
 
 class VRGrabException : public std::string {
  public:
@@ -33,18 +28,16 @@ class VRControlException : public std::string {
 
 class VrMagicCamera {
  public:
-  explicit VrMagicCamera(const ros::NodeHandle &nh);
+  explicit VrMagicCamera(const ros::NodeHandle &nh, VrMagicCameraHandle cam_);
 
   ~VrMagicCamera();
 
   void initCamera();
   void broadcastFrame();
-  void grabFrame(VRmDWORD port, sensor_msgs::Image &img, const ros::Time &triggerTime);
   void spin();
 
  private:
-  VRmUsbCamDevice device;
-  VRmImageFormat target_format;
+  VrMagicCameraHandle cam;
 
   ros::NodeHandle nh;
   ros::NodeHandle leftNs;   // private node handle
@@ -70,10 +63,6 @@ class VrMagicCamera {
 
   std::string cameraConfUrlLeft;
   std::string cameraConfUrlRight;
-
-  int cameraPort;
-  int portLeft;
-  int portRight;
 };
 
 #endif

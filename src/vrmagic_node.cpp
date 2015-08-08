@@ -4,40 +4,40 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
-#include "vrmagic_camera.hpp"
+#include "vrmagic_node.hpp"
 
 using camera_info_manager::CameraInfoManager;
 
-VrMagicCamera::VrMagicCamera(const ros::NodeHandle &nh_, VrMagicCameraHandle *cam_) {
+VrMagicNode::VrMagicNode(const ros::NodeHandle &nh_, VrMagicCameraHandle *cam_) {
   nh = nh_;
   cam = cam_;
 
   leftNs = ros::NodeHandle(nh, "left");
   rightNs = ros::NodeHandle(nh, "right");
 
-  it_left = new image_transport::ImageTransport(leftNs);
-  it_right = new image_transport::ImageTransport(rightNs);
+  itLeft = new image_transport::ImageTransport(leftNs);
+  itRight = new image_transport::ImageTransport(rightNs);
 
   camPubLeft = image_transport::ImageTransport(leftNs).advertiseCamera("image_raw", 2);
   camPubRight = image_transport::ImageTransport(rightNs).advertiseCamera("image_raw", 2);
 
-  cinfo_left = new CameraInfoManager(leftNs, camera_name_left, cameraConfUrlLeft);
-  cinfo_right = new CameraInfoManager(rightNs, camera_name_right, cameraConfUrlRight);
+  cinfoLeft = new CameraInfoManager(leftNs, camera_name_left, cameraConfUrlLeft);
+  cinfoRight = new CameraInfoManager(rightNs, camera_name_right, cameraConfUrlRight);
 }
 
-VrMagicCamera::~VrMagicCamera() {
-  delete it_left;
-  delete it_right;
+VrMagicNode::~VrMagicNode() {
+  delete itLeft;
+  delete itRight;
 
-  delete cinfo_left;
-  delete cinfo_right;
+  delete cinfoLeft;
+  delete cinfoRight;
 }
 
-void VrMagicCamera::broadcastFrame() {
+void VrMagicNode::broadcastFrame() {
   ros::Time triggerTime = ros::Time::now();
 
-  cam->grabFrame(1, leftImageMsg, triggerTime);
-  cam->grabFrame(3, rightImageMsg, triggerTime);
+  cam->grabFrameLeft(leftImageMsg, triggerTime);
+  cam->grabFrameRight(rightImageMsg, triggerTime);
 
   leftCamInfo.header.stamp = triggerTime;
   leftCamInfo.header.frame_id = frameId;
@@ -51,7 +51,7 @@ void VrMagicCamera::broadcastFrame() {
   camPubRight.publish(rightImageMsg, rightCamInfo);
 }
 
-void VrMagicCamera::spin() {
+void VrMagicNode::spin() {
   while (ros::ok()) {
     try {
       broadcastFrame();

@@ -11,11 +11,23 @@
 
 const std::string frameId("VRMAGIC");
 
+struct VrmConfig {
+  VRmDWORD portLeft;
+  VRmDWORD portRight;
+
+  float gainLeft;
+  float gainRight;
+
+  VrmConfig() : portLeft(1), portRight(3), gainLeft(5.f), gainRight(5.f) {}
+};
+
 class VrMagicCameraHandle {
  public:
-  VrMagicCameraHandle();
+  VrMagicCameraHandle(VrmConfig config);
   ~VrMagicCameraHandle();
 
+  void grabFrameLeft(sensor_msgs::Image& img, const ros::Time& triggerTime);
+  void grabFrameRight(sensor_msgs::Image& img, const ros::Time& triggerTime);
   void grabFrame(VRmDWORD port, sensor_msgs::Image& img, const ros::Time& triggerTime);
 
  private:
@@ -23,13 +35,14 @@ class VrMagicCameraHandle {
   VRmImageFormat sourceFormat;
   VRmImageFormat targetFormat;
 
+  VRmDWORD portLeft;
+  VRmDWORD portRight;
+
   void initCamera();
 
   void initSensors();
   void setProperties();
-  void setTargetFormat();
   void startCamera();
-  void fillImageMessage(sensor_msgs::Image& img);
 };
 
 #endif

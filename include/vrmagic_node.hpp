@@ -1,5 +1,5 @@
-#ifndef VRMAGIC_CAMERA_H
-#define VRMAGIC_CAMERA_H
+#ifndef VRMAGIC_NODE_H
+#define VRMAGIC_NODE_H
 
 #include <string>
 
@@ -26,11 +26,11 @@ class VRControlException : public std::string {
   VRControlException(const char *err) : std::string(err) {}
 };
 
-class VrMagicCamera {
+class VrMagicNode {
  public:
-  explicit VrMagicCamera(const ros::NodeHandle &nh, VrMagicCameraHandle *cam_);
+  explicit VrMagicNode(const ros::NodeHandle &nh, VrMagicCameraHandle *cam_);
 
-  ~VrMagicCamera();
+  ~VrMagicNode();
 
   void initCamera();
   void broadcastFrame();
@@ -40,17 +40,17 @@ class VrMagicCamera {
   VrMagicCameraHandle *cam;
 
   ros::NodeHandle nh;
-  ros::NodeHandle leftNs;   // private node handle
-  ros::NodeHandle rightNs;  // private node handle
+  ros::NodeHandle leftNs;
+  ros::NodeHandle rightNs;
 
-  image_transport::ImageTransport *it_left;
-  image_transport::ImageTransport *it_right;
+  image_transport::ImageTransport *itLeft;
+  image_transport::ImageTransport *itRight;
 
   image_transport::CameraPublisher camPubLeft;
   image_transport::CameraPublisher camPubRight;
 
-  camera_info_manager::CameraInfoManager *cinfo_left;
-  camera_info_manager::CameraInfoManager *cinfo_right;
+  camera_info_manager::CameraInfoManager *cinfoLeft;
+  camera_info_manager::CameraInfoManager *cinfoRight;
 
   sensor_msgs::Image leftImageMsg;
   sensor_msgs::Image rightImageMsg;

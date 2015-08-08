@@ -7,27 +7,45 @@
 
 #include "camera_handle.hpp"
 
-static const int NUMBER_OF_SENSORS = 2;
-static const float EXPOSURE_TIME = 5.f;
-static const int PORT_LEFT = 1;
-static const int PORT_RIGHT = 3;
 static const VRmColorFormat TARGET_COLOR_FORMAT = VRM_BGR_3X8;
 
-#define VRMEXECANDCHECK(C)                                        \
+// Macros
+
+#define VRM_CHECK(C)                                              \
   if (!(C)) {                                                     \
     ROS_ERROR("%s : Line %d", VRmUsbCamGetLastError(), __LINE__); \
     exit(EXIT_FAILURE);                                           \
   }
 
-#define CHECK(C, M)                               \
-  if (!(C)) {                                     \
-    ROS_ERROR(M ": %s", VRmUsbCamGetLastError()); \
-    exit(EXIT_FAILURE);                           \
-  }
+// Helper functions
 
-VrMagicCameraHandle::VrMagicCameraHandle() {
+VRmPropId portnumToPropId(VRmDWORD port) {
+  switch (port) {
+    case 1:
+      return VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_1;
+    case 2:
+      return VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_2;
+    case 3:
+      return VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_3;
+    case 4:
+      return VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_4;
+    default:
+      ROS_FATAL("Cannot convert port to prop id: %d", port);
+  }
+}
+
+// Member functions
+
+VrMagicCameraHandle::VrMagicCameraHandle(VrmConfig config) {
   // VRmUsbCamEnableLogging();
+  portLeft = config.portLeft;
+  portRight = config.portRight;
+
+  gainLeft = config.gainLeft;
+  gainRight = config.gainRight;
+
   initCamera();
+  setProperties();
   startCamera();
 }
 
@@ -41,17 +59,17 @@ void VrMagicCameraHandle::initCamera() {
   VRmDWORD size = 0;
 
   ROS_INFO("Scanning for devices");
-  VRMEXECANDCHECK(VRmUsbCamGetDeviceKeyListSize(&size));
+  VRM_CHECK(VRmUsbCamGetDeviceKeyListSize(&size));
   ROS_INFO("Found %d devices", size);
 
   device = 0;
   VRmDeviceKey* p_device_key = 0;
   for (VRmDWORD i = 0; i < size && !device; ++i) {
-    VRMEXECANDCHECK(VRmUsbCamGetDeviceKeyListEntry(i, &p_device_key));
+    VRM_CHECK(VRmUsbCamGetDeviceKeyListEntry(i, &p_device_key));
     if (!p_device_key->m_busy) {
-      VRMEXECANDCHECK(VRmUsbCamOpenDevice(p_device_key, &device));
+      VRM_CHECK(VRmUsbCamOpenDevice(p_device_key, &device));
     }
-    VRMEXECANDCHECK(VRmUsbCamFreeDeviceKey(&p_device_key));
+    VRM_CHECK(VRmUsbCamFreeDeviceKey(&p_device_key));
   }
 
   ROS_INFO("Trying to open device");
@@ -64,21 +82,21 @@ void VrMagicCameraHandle::initCamera() {
   ROS_INFO("Device opened");
 
   // Activate the sensors of desire
-  VRmPropId sensor = VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_1;
-  VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensor);
-  sensor = VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_3;
-  VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensor);
+  VRmPropId sensorLeftProp = portnumToPropId(portLeft);
+  VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensorLeftProp);
+  VRmPropId sensorRightProp = portnumToPropId(portRight);
+  VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensorRightProp);
 
   // Get source format of the camera
   VRmImageFormat sourceFormat;
 
-  VRMEXECANDCHECK(VRmUsbCamGetSourceFormatEx(device, PORT_LEFT, &sourceFormat));
+  VRM_CHECK(VRmUsbCamGetSourceFormatEx(device, portLeft, &sourceFormat));
 
   const char* source_color_format_str;
-  VRMEXECANDCHECK(
+  VRM_CHECK(
       VRmUsbCamGetStringFromColorFormat(sourceFormat.m_color_format, &source_color_format_str));
 
-  ROS_INFO("Selected target format: %d x %d (%s)",
+  ROS_INFO("Selected source format: %d x %d (%s)",
            sourceFormat.m_width,
            sourceFormat.m_height,
            source_color_format_str);
@@ -86,24 +104,22 @@ void VrMagicCameraHandle::initCamera() {
   // select a target format from the list of formats we can convert the source images to.
   // we search for the screen's pixelformat for rendering
   VRmDWORD number_of_target_formats, i;
-  VRMEXECANDCHECK(
-      VRmUsbCamGetTargetFormatListSizeEx2(device, PORT_LEFT, &number_of_target_formats));
+  VRM_CHECK(VRmUsbCamGetTargetFormatListSizeEx2(device, portLeft, &number_of_target_formats));
   for (i = 0; i < number_of_target_formats; ++i) {
-    VRMEXECANDCHECK(VRmUsbCamGetTargetFormatListEntryEx2(device, PORT_LEFT, i, &targetFormat));
+    VRM_CHECK(VRmUsbCamGetTargetFormatListEntryEx2(device, portLeft, i, &targetFormat));
     if (targetFormat.m_color_format == TARGET_COLOR_FORMAT) break;
   }
 
   // Check for right target format
   if (targetFormat.m_color_format != TARGET_COLOR_FORMAT) {
     const char* screen_color_format_str;
-    VRMEXECANDCHECK(
-        VRmUsbCamGetStringFromColorFormat(TARGET_COLOR_FORMAT, &screen_color_format_str));
+    VRM_CHECK(VRmUsbCamGetStringFromColorFormat(TARGET_COLOR_FORMAT, &screen_color_format_str));
     ROS_FATAL("%s not found in target format list.", screen_color_format_str);
     exit(-1);
   }
 
   const char* target_color_format_str;
-  VRMEXECANDCHECK(
+  VRM_CHECK(
       VRmUsbCamGetStringFromColorFormat(targetFormat.m_color_format, &target_color_format_str));
   ROS_INFO("Selected target format: %d x %d (%s)",
            targetFormat.m_width,
@@ -113,55 +129,31 @@ void VrMagicCameraHandle::initCamera() {
 
 void VrMagicCameraHandle::setProperties() {
   VRmBOOL supported;
-  CHECK(VRmUsbCamGetPropertySupported(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &supported),
-        "Cannot check property support");
+  VRM_CHECK(VRmUsbCamGetPropertySupported(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &supported));
   float value = 0.f;
-  CHECK(VRmUsbCamGetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value),
-        "Cannot get property");
+  VRM_CHECK(VRmUsbCamGetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value));
   ROS_INFO("ExposureTime: %f ms, changeable: %s", value, (supported ? "true" : "false"));
 
   if (supported) {
     value = EXPOSURE_TIME;
-    CHECK(VRmUsbCamSetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value),
-          "Cannot get property");
+    VRM_CHECK(VRmUsbCamSetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value));
     ROS_INFO("ExposureTime changed to: %f ms", value);
-  }
-}
-
-void VrMagicCameraHandle::setTargetFormat() {
-  VRmDWORD number_of_targetFormats, i;
-  VRmSTRING imageFormatString;
-
-  CHECK(VRmUsbCamGetTargetFormatListSizeEx2(device, PORT_LEFT, &number_of_targetFormats),
-        "Cannot get target format list");
-  for (i = 0; i < number_of_targetFormats; ++i) {
-    VRmUsbCamGetTargetFormatListEntryEx2(device, PORT_LEFT, i, &targetFormat);
-
-    VRmUsbCamGetStringFromColorFormat(targetFormat.m_color_format, &imageFormatString);
-    ROS_INFO("Supported: %s", imageFormatString);
-    if (targetFormat.m_color_format == VRM_BGR_3X8) {
-      ROS_INFO("BGR8 found !");
-      break;
-    }
   }
 }
 
 void VrMagicCameraHandle::startCamera() {
   ROS_INFO("Start camera");
 
-  VRMEXECANDCHECK(VRmUsbCamResetFrameCounter(device));
-  VRMEXECANDCHECK(VRmUsbCamStart(device));
+  VRM_CHECK(VRmUsbCamResetFrameCounter(device));
+  VRM_CHECK(VRmUsbCamStart(device));
 }
 
-char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+void VrMagicCameraHandle::grabFrameLeft(sensor_msgs::Image& img, const ros::Time& triggerTime) {
+  grabFrame(portLeft, img, triggerTime);
+}
 
-std::string hexStr(unsigned char* data, int len) {
-  std::string s(len * 2, ' ');
-  for (int i = 0; i < len; ++i) {
-    s[2 * i] = hexmap[(data[i] & 0xF0) >> 4];
-    s[2 * i + 1] = hexmap[data[i] & 0x0F];
-  }
-  return s;
+void VrMagicCameraHandle::grabFrameRight(sensor_msgs::Image& img, const ros::Time& triggerTime) {
+  grabFrame(portRight, img, triggerTime);
 }
 
 void VrMagicCameraHandle::grabFrame(VRmDWORD port,
@@ -171,11 +163,9 @@ void VrMagicCameraHandle::grabFrame(VRmDWORD port,
   VRmDWORD framesDropped = 0;
 
   if (VRmUsbCamLockNextImageEx2(device, port, &sourceImg, &framesDropped, 5000)) {
-    // std::string deb = hexStr(targetImg->mp_buffer, 100);
-
     VRmImage* targetImage = 0;
-    VRMEXECANDCHECK(VRmUsbCamNewImage(&targetImage, targetFormat));
-    VRMEXECANDCHECK(VRmUsbCamConvertImage(sourceImg, targetImage));
+    VRM_CHECK(VRmUsbCamNewImage(&targetImage, targetFormat));
+    VRM_CHECK(VRmUsbCamConvertImage(sourceImg, targetImage));
 
     // Fill in the image message with the converted frame from the camera
     img.width = targetImage->m_image_format.m_width;
@@ -186,16 +176,15 @@ void VrMagicCameraHandle::grabFrame(VRmDWORD port,
     img.header.stamp = triggerTime;
     img.header.frame_id = frameId;
 
+    // Convert from strided image to rectangular
     for (unsigned int y = 0; y < img.height; y++) {
       for (unsigned int x = 0; x < img.width * 3; x++) {
         img.data[y * img.width * 3 + x] = targetImage->mp_buffer[y * targetImage->m_pitch + x];
       }
     }
 
-    VRMEXECANDCHECK(VRmUsbCamUnlockNextImage(device, &sourceImg));
+    VRM_CHECK(VRmUsbCamUnlockNextImage(device, &sourceImg));
   } else {
     ROS_FATAL("Could not lock image: %s", VRmUsbCamGetLastError());
   }
 }
-
-void VrMagicCameraHandle::fillImageMessage(sensor_msgs::Image& img) {}

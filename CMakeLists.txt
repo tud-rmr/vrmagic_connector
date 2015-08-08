@@ -38,7 +38,7 @@ link_directories(
 set(${PROJECT_NAME}_SOURCES
     src/main.cpp
     src/camera_handle.cpp
-    src/vrmagic_camera.cpp
+    src/vrmagic_node.cpp
 )
 
 

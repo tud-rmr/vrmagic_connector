@@ -43,7 +43,6 @@ class CameraHandle {
 
   void grabFrameLeft(sensor_msgs::Image& img, const ros::Time& triggerTime);
   void grabFrameRight(sensor_msgs::Image& img, const ros::Time& triggerTime);
-  void grabFrame(VRmDWORD port, sensor_msgs::Image& img, const ros::Time& triggerTime);
 
  private:
   VRmUsbCamDevice device;
@@ -62,12 +61,14 @@ class CameraHandle {
   void checkAndSanitizeConfig();
   void checkAndSanitizeProperty(int& value, VRmPropId property, std::string name);
   void checkAndSanitizeIntProperty(int& value, VRmPropAttribsI attr, std::string name);
-
-  void setGain();
   void setPropertyLeftAndRight(VRmPropId property, int valueLeft, int valueRight);
   void setSingleProperty(VRmDWORD port, VRmPropId property, int value);
+  void setGain();
+  void setTriggerMode();
 
   void startCamera();
+
+  void grabFrame(VRmDWORD port, sensor_msgs::Image& img, const ros::Time& triggerTime);
 };
 }
 #endif

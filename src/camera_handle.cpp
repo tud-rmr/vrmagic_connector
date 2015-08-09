@@ -151,21 +151,11 @@ void CameraHandle::setTargetFormat() {
 }
 
 void CameraHandle::setProperties() {
+  checkAndSanitizeConfig();
+
   if (conf.setGain) {
     setGain();
   }
-
-  // VRmBOOL supported;
-  // VRM_CHECK(VRmUsbCamGetPropertySupported(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &supported));
-  // float value = 0.f;
-  // VRM_CHECK(VRmUsbCamGetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value));
-  // ROS_INFO("ExposureTime: %f ms, changeable: %s", value, (supported ? "true" : "false"));
-
-  // if (supported) {
-  //   value = EXPOSURE_TIME;
-  //   VRM_CHECK(VRmUsbCamSetPropertyValueF(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &value));
-  //   ROS_INFO("ExposureTime changed to: %f ms", value);
-  // }
 }
 
 // To check the configuration, the device has to be opnened before. That is because some properties
@@ -207,10 +197,6 @@ void CameraHandle::checkAndSanitizeIntProperty(int& value, VRmPropAttribsI attr,
   }
 }
 
-void CameraHandle::setGain() {
-  setPropertyLeftAndRight(VRM_PROPID_CAM_GAIN_MONOCHROME_I, conf.gainLeft, conf.gainRight);
-}
-
 void CameraHandle::setPropertyLeftAndRight(VRmPropId property, int valueLeft, int valueRight) {
   setSingleProperty(conf.portLeft, property, valueLeft);
   setSingleProperty(conf.portRight, property, valueRight);
@@ -229,6 +215,10 @@ void CameraHandle::setSingleProperty(VRmDWORD port, VRmPropId property, int valu
     VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
     ROS_INFO("%s changed to: %i ms", propInfo.m_description, value);
   }
+}
+
+void CameraHandle::setGain() {
+  setPropertyLeftAndRight(VRM_PROPID_CAM_GAIN_MONOCHROME_I, conf.gainLeft, conf.gainRight);
 }
 
 void CameraHandle::startCamera() {

@@ -1,7 +1,11 @@
+#include <memory>
+
 #include <ros/ros.h>
 
 #include "vrmagic_node.hpp"
 #include "camera_handle.hpp"
+
+using vrmagic::CameraHandle;
 
 int main(int argc, char *argv[]) {
   ros::init(argc, argv, "vrmagic_camera");
@@ -14,12 +18,10 @@ int main(int argc, char *argv[]) {
     nh.param("camera_settings_url_left", cameraConfUrlLeft, std::string("vrmagic_left.yaml"));
     nh.param("camera_settings_url_right", cameraConfUrlRight, std::string("vrmagic_left.yaml"));
   */
-  VrmConfig config;
-  VrMagicCameraHandle *cam = new VrMagicCameraHandle(config);
+  vrmagic::Config configLeft, configRight;
+  std::unique_ptr<CameraHandle> cam(new CameraHandle(configLeft, configRight));
 
-  VrMagicNode node(nh, cam);
+  VrMagicNode node(nh, std::move(cam));
 
   node.spin();
-
-  delete cam;
 }

@@ -7,6 +7,8 @@
 
 #include "camera_handle.hpp"
 
+namespace vrmagic {
+
 static const VRmColorFormat TARGET_COLOR_FORMAT = VRM_BGR_3X8;
 
 // Macros
@@ -19,7 +21,7 @@ static const VRmColorFormat TARGET_COLOR_FORMAT = VRM_BGR_3X8;
 
 // Helper functions
 
-VRmPropId portnumToPropId(VRmDWORD port) {
+static VRmPropId portnumToPropId(VRmDWORD port) {
   switch (port) {
     case 1:
       return VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_1;
@@ -36,25 +38,21 @@ VRmPropId portnumToPropId(VRmDWORD port) {
 
 // Member functions
 
-VrMagicCameraHandle::VrMagicCameraHandle(VrmConfig config) {
+CameraHandle::CameraHandle(VrmConfig conf) {
   // VRmUsbCamEnableLogging();
-  portLeft = config.portLeft;
-  portRight = config.portRight;
-
-  gainLeft = config.gainLeft;
-  gainRight = config.gainRight;
+  this->config = conf;
 
   initCamera();
   setProperties();
   startCamera();
 }
 
-VrMagicCameraHandle::~VrMagicCameraHandle() {
+CameraHandle::~CameraHandle() {
   VRmUsbCamStop(device);
   VRmUsbCamCloseDevice(device);
 }
 
-void VrMagicCameraHandle::initCamera() {
+void CameraHandle::initCamera() {
   atexit(VRmUsbCamCleanup);
   VRmDWORD size = 0;
 
@@ -82,15 +80,15 @@ void VrMagicCameraHandle::initCamera() {
   ROS_INFO("Device opened");
 
   // Activate the sensors of desire
-  VRmPropId sensorLeftProp = portnumToPropId(portLeft);
+  VRmPropId sensorLeftProp = portnumToPropId(config.portLeft);
   VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensorLeftProp);
-  VRmPropId sensorRightProp = portnumToPropId(portRight);
+  VRmPropId sensorRightProp = portnumToPropId(config.portRight);
   VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensorRightProp);
 
   // Get source format of the camera
   VRmImageFormat sourceFormat;
 
-  VRM_CHECK(VRmUsbCamGetSourceFormatEx(device, portLeft, &sourceFormat));
+  VRM_CHECK(VRmUsbCamGetSourceFormatEx(device, config.portLeft, &sourceFormat));
 
   const char* source_color_format_str;
   VRM_CHECK(
@@ -104,9 +102,10 @@ void VrMagicCameraHandle::initCamera() {
   // select a target format from the list of formats we can convert the source images to.
   // we search for the screen's pixelformat for rendering
   VRmDWORD number_of_target_formats, i;
-  VRM_CHECK(VRmUsbCamGetTargetFormatListSizeEx2(device, portLeft, &number_of_target_formats));
+  VRM_CHECK(
+      VRmUsbCamGetTargetFormatListSizeEx2(device, config.portLeft, &number_of_target_formats));
   for (i = 0; i < number_of_target_formats; ++i) {
-    VRM_CHECK(VRmUsbCamGetTargetFormatListEntryEx2(device, portLeft, i, &targetFormat));
+    VRM_CHECK(VRmUsbCamGetTargetFormatListEntryEx2(device, config.portLeft, i, &targetFormat));
     if (targetFormat.m_color_format == TARGET_COLOR_FORMAT) break;
   }
 
@@ -127,7 +126,7 @@ void VrMagicCameraHandle::initCamera() {
            target_color_format_str);
 }
 
-void VrMagicCameraHandle::setProperties() {
+void CameraHandle::setProperties() {
   VRmBOOL supported;
   VRM_CHECK(VRmUsbCamGetPropertySupported(device, VRM_PROPID_CAM_EXPOSURE_TIME_F, &supported));
   float value = 0.f;
@@ -141,24 +140,22 @@ void VrMagicCameraHandle::setProperties() {
   }
 }
 
-void VrMagicCameraHandle::startCamera() {
+void CameraHandle::startCamera() {
   ROS_INFO("Start camera");
 
   VRM_CHECK(VRmUsbCamResetFrameCounter(device));
   VRM_CHECK(VRmUsbCamStart(device));
 }
 
-void VrMagicCameraHandle::grabFrameLeft(sensor_msgs::Image& img, const ros::Time& triggerTime) {
-  grabFrame(portLeft, img, triggerTime);
+void CameraHandle::grabFrameLeft(sensor_msgs::Image& img, const ros::Time& triggerTime) {
+  grabFrame(config.portLeft, img, triggerTime);
 }
 
-void VrMagicCameraHandle::grabFrameRight(sensor_msgs::Image& img, const ros::Time& triggerTime) {
-  grabFrame(portRight, img, triggerTime);
+void CameraHandle::grabFrameRight(sensor_msgs::Image& img, const ros::Time& triggerTime) {
+  grabFrame(config.portRight, img, triggerTime);
 }
 
-void VrMagicCameraHandle::grabFrame(VRmDWORD port,
-                                    sensor_msgs::Image& img,
-                                    const ros::Time& triggerTime) {
+void CameraHandle::grabFrame(VRmDWORD port, sensor_msgs::Image& img, const ros::Time& triggerTime) {
   VRmImage* sourceImg = 0;
   VRmDWORD framesDropped = 0;
 
@@ -187,4 +184,5 @@ void VrMagicCameraHandle::grabFrame(VRmDWORD port,
   } else {
     ROS_FATAL("Could not lock image: %s", VRmUsbCamGetLastError());
   }
+}
 }

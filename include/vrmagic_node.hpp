@@ -2,6 +2,7 @@
 #define VRMAGIC_NODE_H
 
 #include <string>
+#include <memory>
 
 #include <boost/thread.hpp>
 
@@ -28,7 +29,7 @@ class VRControlException : public std::string {
 
 class VrMagicNode {
  public:
-  explicit VrMagicNode(const ros::NodeHandle &nh, VrMagicCameraHandle *cam_);
+  explicit VrMagicNode(const ros::NodeHandle &nh, std::unique_ptr<CameraHandle> cam_);
 
   ~VrMagicNode();
 
@@ -37,7 +38,7 @@ class VrMagicNode {
   void spin();
 
  private:
-  VrMagicCameraHandle *cam;
+  std::unique_ptr<CameraHandle> cam;
 
   ros::NodeHandle nh;
   ros::NodeHandle leftNs;

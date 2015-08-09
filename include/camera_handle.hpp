@@ -9,22 +9,24 @@
 
 #include "vrmusbcam2.h"
 
+namespace vrmagic {
+
 const std::string frameId("VRMAGIC");
 
-struct VrmConfig {
+struct Config {
   VRmDWORD portLeft;
   VRmDWORD portRight;
 
   float gainLeft;
   float gainRight;
 
-  VrmConfig() : portLeft(1), portRight(3), gainLeft(5.f), gainRight(5.f) {}
+  Config() : portLeft(1), portRight(3), gainLeft(5.f), gainRight(5.f) {}
 };
 
-class VrMagicCameraHandle {
+class CameraHandle {
  public:
-  VrMagicCameraHandle(VrmConfig config);
-  ~VrMagicCameraHandle();
+  CameraHandle(VrmConfig conf);
+  ~CameraHandle();
 
   void grabFrameLeft(sensor_msgs::Image& img, const ros::Time& triggerTime);
   void grabFrameRight(sensor_msgs::Image& img, const ros::Time& triggerTime);
@@ -35,8 +37,7 @@ class VrMagicCameraHandle {
   VRmImageFormat sourceFormat;
   VRmImageFormat targetFormat;
 
-  VRmDWORD portLeft;
-  VRmDWORD portRight;
+  VrmConfig config;
 
   void initCamera();
 
@@ -44,5 +45,5 @@ class VrMagicCameraHandle {
   void setProperties();
   void startCamera();
 };
-
+}
 #endif

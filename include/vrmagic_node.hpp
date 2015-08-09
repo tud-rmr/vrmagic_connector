@@ -29,7 +29,7 @@ class VRControlException : public std::string {
 
 class VrMagicNode {
  public:
-  explicit VrMagicNode(const ros::NodeHandle &nh, std::unique_ptr<CameraHandle> cam_);
+  explicit VrMagicNode(const ros::NodeHandle &nh, std::auto_ptr<vrmagic::CameraHandle> cam_);
 
   ~VrMagicNode();
 
@@ -38,7 +38,7 @@ class VrMagicNode {
   void spin();
 
  private:
-  std::unique_ptr<CameraHandle> cam;
+  std::auto_ptr<vrmagic::CameraHandle> cam;
 
   ros::NodeHandle nh;
   ros::NodeHandle leftNs;

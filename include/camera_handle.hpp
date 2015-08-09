@@ -1,6 +1,8 @@
 #ifndef VRMAGIC_CAMERA_HANDLE_H
 #define VRMAGIC_CAMERA_HANDLE_H
 
+#include <string>
+
 #include <ros/ros.h>
 
 #include <sensor_msgs/CameraInfo.h>
@@ -11,21 +13,32 @@
 
 namespace vrmagic {
 
-const std::string frameId("VRMAGIC");
-
 struct Config {
+  /////////////
+  // Globals //
+  /////////////
+
+  std::string frameId;
+
+  // In ms. When locking the image, an error is thrown after the timeout
+  // if the image has not been unlocked until then.
+  int timeout;
+
+  // Sensor configuration
   VRmDWORD portLeft;
   VRmDWORD portRight;
 
-  float gainLeft;
-  float gainRight;
+  bool setGain;
+  int gainLeft;
+  int gainRight;
 
-  Config() : portLeft(1), portRight(3), gainLeft(5.f), gainRight(5.f) {}
+  // Default values
+  Config() : frameId("VRMAGIC"), timeout(5000), portLeft(1), portRight(3), setGain(false) {}
 };
 
 class CameraHandle {
  public:
-  CameraHandle(VrmConfig conf);
+  CameraHandle(Config conf);
   ~CameraHandle();
 
   void grabFrameLeft(sensor_msgs::Image& img, const ros::Time& triggerTime);
@@ -37,12 +50,23 @@ class CameraHandle {
   VRmImageFormat sourceFormat;
   VRmImageFormat targetFormat;
 
-  VrmConfig config;
+  Config conf;
 
   void initCamera();
-
+  void openDevice();
   void initSensors();
+  void getSourceFormat();
+  void setTargetFormat();
+
   void setProperties();
+  void checkAndSanitizeConfig();
+  void checkAndSanitizeProperty(int& value, VRmPropId property, std::string name);
+  void checkAndSanitizeIntProperty(int& value, VRmPropAttribsI attr, std::string name);
+
+  void setGain();
+  void setPropertyLeftAndRight(VRmPropId property, int valueLeft, int valueRight);
+  void setSingleProperty(VRmDWORD port, VRmPropId property, int value);
+
   void startCamera();
 };
 }

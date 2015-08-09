@@ -9,8 +9,7 @@
 using camera_info_manager::CameraInfoManager;
 using vrmagic::CameraHandle;
 
-VrMagicNode::VrMagicNode(const ros::NodeHandle &nh_, std::unique_ptr<CameraHandle> cam_);
-) {
+VrMagicNode::VrMagicNode(const ros::NodeHandle &nh_, std::auto_ptr<CameraHandle> cam_) {
   nh = nh_;
   cam = cam_;
 
@@ -42,11 +41,11 @@ void VrMagicNode::broadcastFrame() {
   cam->grabFrameRight(rightImageMsg, triggerTime);
 
   leftCamInfo.header.stamp = triggerTime;
-  leftCamInfo.header.frame_id = frameId;
+  leftCamInfo.header.frame_id = leftImageMsg.header.frame_id;
   leftCamInfo.width = leftImageMsg.width;
 
   rightCamInfo.header.stamp = triggerTime;
-  rightCamInfo.header.frame_id = frameId;
+  rightCamInfo.header.frame_id = rightImageMsg.header.frame_id;
   rightCamInfo.width = rightImageMsg.width;
 
   camPubLeft.publish(leftImageMsg, leftCamInfo);

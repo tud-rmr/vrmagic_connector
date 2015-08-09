@@ -1,5 +1,7 @@
 #include <memory>
 
+#include <boost/move/move.hpp>
+
 #include <ros/ros.h>
 
 #include "vrmagic_node.hpp"
@@ -18,10 +20,16 @@ int main(int argc, char *argv[]) {
     nh.param("camera_settings_url_left", cameraConfUrlLeft, std::string("vrmagic_left.yaml"));
     nh.param("camera_settings_url_right", cameraConfUrlRight, std::string("vrmagic_left.yaml"));
   */
-  vrmagic::Config configLeft, configRight;
-  std::unique_ptr<CameraHandle> cam(new CameraHandle(configLeft, configRight));
+  vrmagic::Config config;
+  config.setGain = true;
+  config.gainLeft = 42;
+  config.gainRight = 1338;
 
-  VrMagicNode node(nh, std::move(cam));
+  // I use auto_ptr here as ROS normally does not support C++11, which would give the better
+  // unique_ptr. The reason why no raw pointer is to give the node the clear ownership of the camera
+  std::auto_ptr<CameraHandle> cam(new CameraHandle(config));
+
+  VrMagicNode node(nh, boost::move(cam));
 
   node.spin();
 }

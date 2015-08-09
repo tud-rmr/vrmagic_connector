@@ -25,8 +25,8 @@ struct Config {
   int timeout;
 
   // Sensor configuration
-  VRmDWORD portLeft;
-  VRmDWORD portRight;
+  int portLeft;
+  int portRight;
 
   bool setGain;
   int gainLeft;

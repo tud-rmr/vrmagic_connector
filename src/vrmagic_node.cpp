@@ -9,7 +9,7 @@
 using camera_info_manager::CameraInfoManager;
 using vrmagic::CameraHandle;
 
-VrMagicNode::VrMagicNode(const ros::NodeHandle &nh_, std::auto_ptr<CameraHandle> cam_) {
+VrMagicNode::VrMagicNode(const ros::NodeHandle &nh_, CameraHandle *cam_) {
   nh = nh_;
   cam = cam_;
 

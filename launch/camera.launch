@@ -1,7 +1,7 @@
 <launch>
   <node name="vrmagic" pkg="vrmagic_camera" type="vrmagic_camera_node" output="screen">
-	  <param name="left/gain" value="42" />
-	  <param name="right/gain" value="1338" />
+	  <param name="left/gain" value="64" />
+	  <param name="right/gain" value="64" />
 
 	  <param name="left/port" value="1" />
 	  <param name="right/port" value="3" />

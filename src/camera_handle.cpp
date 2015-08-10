@@ -263,6 +263,8 @@ void CameraHandle::grabFrame(VRmDWORD port, sensor_msgs::Image& img, const ros::
       }
     }
 
+    VRM_CHECK(VRmUsbCamFreeImage(&targetImage));
+
     VRM_CHECK(VRmUsbCamUnlockNextImage(device, &sourceImg));
   } else {
     ROS_FATAL("Could not lock image: %s", VRmUsbCamGetLastError());

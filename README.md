@@ -29,4 +29,28 @@ from the catkin_ws root folder. This file also can be used to alter some paramet
 	rosrun image_view image_view image:=/vrmagic/right/image_raw
 
 for the left or right image.
+
+## Properties
+
+There are two kinds of properties: Camera properties and sensor properties. Camera properties, like enabling the status LED, can only be set for the camera board itself. Sensor properties can be set for each sensor (left and right). The properties can currently be set via ROS parameter server. An example can be seen in the demo launch file. When setting properties, make sure that your board supports them. Not all boards support all properties. Attempting to set properties which are not supported results in a warning in the log. Setting properties which are supported but have a desired value outside of the specified range are set to default. Properties are right now not reset during runs.
+
+The properties currently supported are
+
+### Camera properties
+
+|Name   	|Path  	|Type  	|Min   	|Max  	| Default 	| Description 	|
+|---		|---	|---	|---	|---	| ---		| --- 			|
+|   		|   	|   	|   	|   	|			|				|
+
 	
+### Sensor properties
+
+Each of these properties has to be prefixed with either 'left' or 'right'. So to set the exposure of the left sensor, one has to set 'left/exposure'.
+
+|Name   	|Path  	|Type  	|Min   	|Max  	| Default 	| Description 	|
+|---		|---	|---	|---	|---	| ---		| --- 			|
+| Gain 		|/gain 	|   	|   	|   	|			|				|
+
+### Add properties
+
+Right now, not all available properties can be set via launch file. That is 

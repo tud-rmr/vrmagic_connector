@@ -153,9 +153,16 @@ void CameraHandle::setTargetFormat() {
 void CameraHandle::setProperties() {
   checkAndSanitizeConfig();
 
-  if (conf.setGain) {
-    setGain();
-  }
+  if (conf.setGain) setGain();
+  if (conf.setExposure) setExposure();
+}
+
+void CameraHandle::setGain() {
+  setPropertyLeftAndRight(VRM_PROPID_CAM_GAIN_MONOCHROME_I, conf.gainLeft, conf.gainRight);
+}
+
+void CameraHandle::setExposure() {
+  setPropertyLeftAndRight(VRM_PROPID_CAM_EXPOSURE_TIME_F, conf.exposureLeft, conf.exposureRight);
 }
 
 // To check the configuration, the device has to be opnened before. That is because some properties
@@ -169,41 +176,54 @@ void CameraHandle::checkAndSanitizeConfig() {
 
 void CameraHandle::checkAndSanitizeProperty(int& value, VRmPropId property, std::string name) {
   VRmPropInfo propInfo;
-
   VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
 
-  switch (propInfo.m_type) {
-    case VRM_PROP_TYPE_INT: {
-      VRmPropAttribsI attribs;
-      VRmUsbCamGetPropertyAttribsI(device, property, &attribs);
-      checkAndSanitizeIntProperty(value, attribs, name);
-      break;
-    }
-    default:
-      ROS_ERROR("Type not supported: %s", propInfo.m_id_string);
+  if (VRM_PROP_TYPE_INT != propInfo.m_type) {
+    ROS_ERROR("Invalid type of property!");
   }
-}
 
-void CameraHandle::checkAndSanitizeIntProperty(int& value, VRmPropAttribsI attr, std::string name) {
-  if (value < attr.m_min || value > attr.m_max) {
+  VRmPropAttribsI attribs;
+  VRmUsbCamGetPropertyAttribsI(device, property, &attribs);
+  if (value < attribs.m_min || value > attribs.m_max) {
     ROS_WARN("Invalid value for parameter %s, has to be in [%d,%d], but was: %d",
              name.c_str(),
-             attr.m_min,
-             attr.m_max,
+             attribs.m_min,
+             attribs.m_max,
              value);
 
-    ROS_WARN("Default will be used for %s: %d", name.c_str(), attr.m_default);
-    value = attr.m_default;
+    ROS_WARN("Default will be used for %s: %d", name.c_str(), attribs.m_default);
+    value = attribs.m_default;
   }
 }
 
-void CameraHandle::setPropertyLeftAndRight(VRmPropId property, int valueLeft, int valueRight) {
+template <typename T>
+void CameraHandle::setPropertyLeftAndRight(VRmPropId property, T valueLeft, T valueRight) {
   setSingleProperty(conf.portLeft, property, valueLeft);
   setSingleProperty(conf.portRight, property, valueRight);
 }
 
 void CameraHandle::setSingleProperty(VRmDWORD port, VRmPropId property, int value) {
   VRmBOOL supported;
+  VRmPropInfo propInfo;
+
+  // Select the port to set
+  VRmPropId sensor = portnumToPropId(port);
+  VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensor);
+
+  VRM_CHECK(VRmUsbCamGetPropertySupported(device, property, &supported));
+
+  if (supported) {
+    VRM_CHECK(VRmUsbCamSetPropertyValueI(device, property, &value));
+    VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
+    ROS_INFO("%s changed to: %i ms", propInfo.m_description, value);
+  } else {
+    ROS_WARN("Property '%s' not supported!", propInfo.m_description)
+  }
+}
+
+void CameraHandle::setSingleProperty(VRmDWORD port, VRmPropId property, float value) {
+  VRmBOOL supported;
+  // Select the port to set
   VRmPropId sensor = portnumToPropId(port);
   VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensor);
 
@@ -211,14 +231,12 @@ void CameraHandle::setSingleProperty(VRmDWORD port, VRmPropId property, int valu
 
   if (supported) {
     VRmPropInfo propInfo;
-    VRM_CHECK(VRmUsbCamSetPropertyValueI(device, property, &value));
+    VRM_CHECK(VRmUsbCamSetPropertyValueF(device, property, &value));
     VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_INFO("%s changed to: %i ms", propInfo.m_description, value);
+    ROS_INFO("%s changed to: %f ms", propInfo.m_description, value);
+  } else {
+    ROS_WARN("Property '%s' not supported!", propInfo.m_description)
   }
-}
-
-void CameraHandle::setGain() {
-  setPropertyLeftAndRight(VRM_PROPID_CAM_GAIN_MONOCHROME_I, conf.gainLeft, conf.gainRight);
 }
 
 void CameraHandle::startCamera() {

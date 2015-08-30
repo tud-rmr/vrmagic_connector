@@ -64,6 +64,16 @@ Each of these properties has to be prefixed with either 'left' or 'right'. So to
 
 Right now, not all properties available to a camera board can be set with this package. The follwing procedure describes how to add support for additional properties:
 
+1. Add the property, a boolean flag to indicate whether it has to be set, and a default value in the constructor to the `Config` struct in `include/camera_handle.hpp`
+
+2. Look up the property enum member in `vrmusbcam2props.h`. This file can either be found in the DevKit installation, normally in `/opt`, in `/usr/include` if installed with the custom *deb, or just extract the DevKit deb from the Vendor archive and find it there.
+
+3. Add a function setXXX(void) and the respective declaration to the CameraHandle class. Call it in `CameraHandle::setProperties`. The body of the function should look for a sensor property like
+
+	setPropertyLeftAndRight(conf.<propName>Left, conf.<propName>Right, <propIdYouLookedUp>);
+
+4. If you want to set the parameter via launch file, extract it like done in `main.cpp` by checking whether the parameter has been set, and then set the config which is later passed to the CameraHandle of the connector node.
+
 ## Features missing 
 
 - Dynamic reconfigure: Make the parameters changeable on runtime. Right now, they only can be altered on node startup

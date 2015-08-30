@@ -70,7 +70,7 @@ Right now, not all properties available to a camera board can be set with this p
 
 3. Add a function setXXX(void) and the respective declaration to the CameraHandle class. Call it in `CameraHandle::setProperties`. The body of the function should look for a sensor property like
 
-	setPropertyLeftAndRight(conf.<propName>Left, conf.<propName>Right, <propIdYouLookedUp>);
+	setPropertyLeftAndRight(conf.${propName}Left, conf.${propName}Right, ${propIdYouLookedUp});
 
 4. If you want to set the parameter via launch file, extract it like done in `main.cpp` by checking whether the parameter has been set, and then set the config which is later passed to the CameraHandle of the connector node.
 

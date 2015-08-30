@@ -4,6 +4,12 @@ ROS package to connect a VRMagic USB camera into the ROS ecosystem.
 
 ## Installation
 
+In general, you need to install the VRmUsbCam DevKit found on the [VRMagic homepage](https://www.vrmagic.com/en/imaging/downloads/). The installation guide can be found in the extracted archive in the README. 
+
+### Manual install 
+
+As some problems occured while installing the DevKit side by side with ROS Jade, the following is a solution on how to circumvent problems with a conflicting Boost version. Try to install it according to the README first, as that is much less hacky.
+
 Append the following line to the file /etc/apt/sources.list:
 
 	deb http://repository.imaging.vrmagic.com/packages/imaging/repository0/linux/debian precise contrib
@@ -13,7 +19,7 @@ Then install the following packages
 	sudo apt-get update
 	sudo apt-get install vrmagic-linux-pc-camera-runtime 
 
-Then, you either have to extract the lib and include folder from the *vrmagic-linux-pc-camera-sdk* (deb is just a zip archive) or install the deb I built. Problem was that the Camera SDK the vendor offers has dependencies to a version of Boost which is not compatible with the version of ROS. Therefore, one has to manually copy header and library to somewhere where CMake can find it, or use the package I built which can be installed side-by-side with ROS. Just leave me a mail and I hand it over. I do not want to check it in due to license issues. I asked the VRMagic support to publish a seperate development package without the Boost requirement, and wait for an answer. I do not tested my repackaged deb thourougly, so install it on your own risk. It worked for me.
+Then, you either have to extract the lib and include folder from the *vrmagic-linux-pc-camera-sdk* (deb is just a zip archive) or install the deb I built. Problem was that the Camera SDK the vendor offers has dependencies to a version of Boost which is not compatible with my version of ROS. Therefore, one has to manually copy header and library to somewhere where CMake can find it, or use the package I built which can be installed side-by-side with ROS. Just leave me a mail and I hand it over. I do not want to check it in version control due to license issues. I asked the VRMagic support to publish a seperate development package without the Boost requirement, and wait for an answer. I do not tested my repackaged deb thourougly, so install it on your own risk. It worked for me. No warranty.
 
 ## Running demo
 
@@ -26,13 +32,17 @@ from the catkin_ws root folder. This file also can be used to alter some paramet
 	rosrun image_view image_view image:=/vrmagic/left/image_raw
 	rosrun image_view image_view image:=/vrmagic/right/image_raw
 
-for the left or right image.
+for the left or right image. You maybe have to include the namespace of your ROS core, depending on the configuration. If you do not find the correct topic name, just look at the published topics with tools like `rqt`.
 
 ## Properties
 
-There are two kinds of properties: Camera properties and sensor properties. Camera properties, like enabling the status LED, can only be set for the camera board itself. Sensor properties can be set for each sensor (left and right). The properties can currently be set via ROS parameter server. An example can be seen in the demo launch file. When setting properties, make sure that your board supports them. Not all boards support all properties. Attempting to set properties which are not supported results in a warning in the log. Setting properties which are supported but have a desired value outside of the specified range are set to default. Properties are right now not reset during runs.
+VRMagic USB camera has many properties, like gain or exposure, which can be set with the DevKit. There are two kinds of properties: Camera properties and sensor properties. Camera properties, like enabling the status LED, can only be set for the camera board itself. Sensor properties can be set for each sensor (left and right). The properties can currently be set via ROS parameter server. 
 
-The properties currently supported are
+When setting properties, make sure that your board supports them. Not all boards support all properties. Attempting to set properties which are not supported results in a warning in the log. Setting properties which are supported but have a desired value outside of the specified range **are set to default**. 
+
+Properties are right now not reset on boot, just overwritten if specified. An example launch file can be found in `launch/camera.launch`.
+
+The properties currently supported are described in the following tables.
 
 ### Camera properties
 
@@ -47,8 +57,15 @@ Each of these properties has to be prefixed with either 'left' or 'right'. So to
 
 |Name   	|Path  	|Type  	|Min   	|Max  	| Default 	| Description 	|
 |---		|---	|---	|---	|---	| ---		| --- 			|
-| Gain 		|/gain 	|   	|   	|   	|			|				|
+| Gain 		|/gain 	| Int  	|   	|   	|			| Gain is an electronic amplification of the video signal. |
+| Port 		|/port 	| Int  	|   	|   	|			| The port number of the sensor, can be found on the white cable .|
 
 ### Add properties
 
-Right now, not all available properties can be set via launch file. That is 
+Right now, not all properties available to a camera board can be set with this package. The follwing procedure describes how to add support for additional properties:
+
+## Features missing 
+
+- Dynamic reconfigure: Make the parameters changeable on runtime. Right now, they only can be altered on node startup
+- Parameters for other camera boards. 
+- Software trigger for boards which support it. That might improve the framerate.

@@ -63,21 +63,24 @@ class CameraHandle {
 
   void initCamera();
   void openDevice();
-  void initSensors();
   void getSourceFormat();
   void setTargetFormat();
-  void setPortActive(VRmDWORD port);
+
+  bool isPropertySupported(VRmPropId property);
+  void setSensorActive(VRmDWORD port);
 
   void setProperties();
   void checkAndSanitizeConfig();
   void checkAndSanitizeProperty(int& value, VRmPropId property, std::string name);
+  void checkAndSanitizeProperty(float& value, VRmPropId property, std::string name);
+  void checkAndSanitizeProperty(bool& value, VRmPropId property, std::string name);
 
   template <typename T>
-  void setPropertyLeftAndRight(VRmPropId property, T valueLeft, T valueRight);
+  void setPropertyLeftAndRight(T valueLeft, T valueRight, VRmPropId property);
 
-  bool isPropertySupported(VRmPropId property);
-  void setSingleProperty(VRmDWORD port, VRmPropId property, int value);
-  void setSingleProperty(VRmDWORD port, VRmPropId property, float value);
+  void setSingleProperty(int value, VRmPropId property, VRmDWORD port);
+  void setSingleProperty(float value, VRmPropId property, VRmDWORD port);
+  void setSingleProperty(bool value, VRmPropId property, VRmDWORD port);
 
   void setGain();
   void setExposure();

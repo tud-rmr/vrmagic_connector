@@ -105,6 +105,11 @@ void CameraHandle::openDevice() {
   ROS_INFO("Device opened");
 }
 
+/**
+ * When setting properties, the sensor for which the properties should be set first has to
+ * be activated with this function. Call it before setting parameters.
+ * @param port The port number of the sensor
+ */
 void CameraHandle::setSensorActive(VRmDWORD port) {
   VRmPropId sensorProp = portnumToPropId(port);
   VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensorProp);

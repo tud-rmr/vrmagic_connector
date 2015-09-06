@@ -36,11 +36,12 @@ static VRmPropId portnumToPropId(VRmDWORD port) {
   }
 }
 
+void cameraShutdown() { VRmUsbCamCleanup(); }
+
 // Member functions
 
 CameraHandle::CameraHandle(Config conf) {
-  // VRmUsbCamEnableLogging();
-  atexit(VRmUsbCamCleanup);
+  if (conf.enableLogging) VRmUsbCamEnableLogging();
 
   this->conf = conf;
 
@@ -51,6 +52,7 @@ CameraHandle::CameraHandle(Config conf) {
 CameraHandle::~CameraHandle() {
   VRmUsbCamStop(device);
   VRmUsbCamCloseDevice(device);
+  VRmUsbCamCleanup();
 }
 
 void CameraHandle::initCamera() {

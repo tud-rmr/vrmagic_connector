@@ -1,3 +1,7 @@
+// Copyright(c) 2015 Jan-Christoph Klie.
+
+#include <signal.h>
+
 #include <string>
 
 #include <ros/ros.h>
@@ -38,8 +42,18 @@ static bool getFloatParam(const ros::NodeHandle nh, const string& key, float& va
   return status;
 }
 
+static void mySigIntHandler(int sig) {
+  vrmagic::cameraShutdown();
+  ros::requestShutdown();
+}
+
 int main(int argc, char* argv[]) {
-  ros::init(argc, argv, "vrmagic_camera");
+  ros::init(argc, argv, "vrmagic_camera", ros::init_options::NoSigintHandler);
+
+  atexit(vrmagic::cameraShutdown);
+  signal(SIGINT, mySigIntHandler);
+  signal(SIGSEGV, mySigIntHandler);
+
   ros::NodeHandle nh("vrmagic");
 
   vrmagic::Config config;

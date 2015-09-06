@@ -46,11 +46,10 @@ The properties currently supported are described in the following tables.
 
 ### Camera properties
 
-|Name   	|Path  	|Type  	|Min   	|Max  	| Default 	| Description 	|
-|---		|---	|---	|---	|---	| ---		| --- 			|
-|   		|   	|   	|   	|   	|			|				|
+|Name   				|Path  				|Type  	|Min   	|Max  	| Default 	| Description 												|
+|---					|---				|---	|---	|---	| ---		| --- 														|
+| Camera logging  		| /enable_logging   | Bool 	|   	|   	| false		| Enable the logging facilities of the VRmUsbCam library. 	|
 
-	
 ### Sensor properties
 
 Each of these properties has to be prefixed with either 'left' or 'right'. So to set the exposure of the left sensor, one has to set 'left/exposure'.

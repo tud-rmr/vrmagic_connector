@@ -1,16 +1,18 @@
 <launch>
-  <node name="vrmagic" pkg="vrmagic_camera" type="vrmagic_camera_node" output="screen">
-  	  <param name="left/port" value="1" />
-	  <param name="right/port" value="2" />
+	<node name="vrmagic" pkg="vrmagic_camera" type="vrmagic_camera_node" output="screen">
+		<param name="enable_logging" value="false" />
 
-	  <param name="left/gain" value="64" />
-	  <param name="right/gain" value="64" />
+		<param name="left/port" value="1" />
+		<param name="right/port" value="2" />
 
-	  <param name="left/exposure" value="32" />
-	  <param name="right/exposure" value="32" />
+		<param name="left/gain" value="64" />
+		<param name="right/gain" value="64" />
 
-	  <param name="camera_settings_url_left" value="vrmagic_left.yaml" />
-	  <param name="camera_settings_url_right" value="vrmagic_left.yaml" />
-  </node>
+		<param name="left/exposure" value="32" />
+		<param name="right/exposure" value="32" />
+
+		<param name="camera_settings_url_left" value="vrmagic_left.yaml" />
+		<param name="camera_settings_url_right" value="vrmagic_left.yaml" />
+	</node>
 
 </launch>

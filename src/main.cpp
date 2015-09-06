@@ -13,6 +13,8 @@ using std::string;
 
 using vrmagic::CameraHandle;
 
+static const string ENABLE_LOGGING = "enable_logging";
+
 static const string LEFT = "left/";
 static const string RIGHT = "right/";
 
@@ -57,6 +59,8 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nh("vrmagic");
 
   vrmagic::Config config;
+
+  nh.param<bool>(ENABLE_LOGGING, config.enableLogging, false);
 
   // Set ports
   nh.param<int>(LEFT_PORT, config.portLeft, LEFT_PORT_DEFAULT);

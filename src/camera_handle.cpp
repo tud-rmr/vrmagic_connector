@@ -121,8 +121,7 @@ void CameraHandle::getSourceFormat() {
   VRM_CHECK(VRmUsbCamGetSourceFormatEx(device, conf.portLeft, &sourceFormat));
 
   const char* source_color_format_str;
-  VRM_CHECK(
-      VRmUsbCamGetStringFromColorFormat(sourceFormat.m_color_format, &source_color_format_str));
+  VRM_CHECK(VRmUsbCamGetStringFromColorFormat(sourceFormat.m_color_format, &source_color_format_str));
 
   ROS_INFO("Selected source format: %d x %d (%s)",
            sourceFormat.m_width,

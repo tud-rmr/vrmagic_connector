@@ -166,6 +166,7 @@ void CameraHandle::setGain() {
 }
 
 void CameraHandle::setExposure() {
+  ROS_INFO("Set exposure");
   setPropertyLeftAndRight(conf.exposureLeft, conf.exposureRight, VRM_PROPID_CAM_EXPOSURE_TIME_F);
 }
 
@@ -237,6 +238,10 @@ void CameraHandle::checkAndSanitizeConfig() {
   // Check gain
   checkAndSanitizeProperty(conf.gainLeft, VRM_PROPID_CAM_GAIN_MONOCHROME_I, "gainLeft");
   checkAndSanitizeProperty(conf.gainRight, VRM_PROPID_CAM_GAIN_MONOCHROME_I, "gainRight");
+
+  // Check exposure
+  checkAndSanitizeProperty(conf.exposureLeft, VRM_PROPID_CAM_EXPOSURE_TIME_F, "exposureLeft");
+  checkAndSanitizeProperty(conf.exposureRight, VRM_PROPID_CAM_EXPOSURE_TIME_F, "exposureRight");
 }
 
 /**

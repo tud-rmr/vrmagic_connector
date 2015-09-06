@@ -38,12 +38,7 @@ struct Config {
 
   // Default values
   Config()
-      : frameId("VRMAGIC"),
-        timeout(5000),
-        portLeft(1),
-        portRight(3),
-        setGain(false),
-        setExposure(false) {}
+      : frameId("VRMAGIC"), timeout(5000), portLeft(1), portRight(3), setGain(false), setExposure(false) {}
 };
 
 class CameraHandle {

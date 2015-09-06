@@ -55,10 +55,11 @@ The properties currently supported are described in the following tables.
 
 Each of these properties has to be prefixed with either 'left' or 'right'. So to set the exposure of the left sensor, one has to set 'left/exposure'.
 
-|Name   	|Path  	|Type  	|Min   	|Max  	| Default 	| Description 	|
-|---		|---	|---	|---	|---	| ---		| --- 			|
-| Gain 		|/gain 	| Int  	|   	|   	|			| Gain is an electronic amplification of the video signal. |
-| Port 		|/port 	| Int  	|   	|   	|			| The port number of the sensor, can be found on the white cable .|
+|Name   	|Path  		|Type  	|Min   	|Max  	| Default 	| Description 	|
+|---		|---		|---	|---	|---	| ---		| --- 			|
+| Gain 		|/gain 		| Int  	|   	|   	|			| Gain is an electronic amplification of the video signal. |
+| Exposure	|/exposure	| Float	|   	| 64.0  | 32.0		| Exposure time [ms] is the length of time a camera's shutter is open when taking a photograph.|
+| Port 		|/port 		| Int  	|   	|   	|			| The port number of the sensor, can be found on the white cable .|
 
 ### Add properties
 

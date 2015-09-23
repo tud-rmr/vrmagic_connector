@@ -2,9 +2,6 @@
 #define VRMAGIC_NODE_H
 
 #include <string>
-#include <memory>
-
-#include <boost/thread.hpp>
 
 #include <ros/ros.h>
 
@@ -17,19 +14,13 @@
 
 #include "camera_handle.hpp"
 
-class VRGrabException : public std::string {
- public:
-  VRGrabException(const char *err) : std::string(err) {}
-};
+namespace vrmagic {
 
-class VRControlException : public std::string {
- public:
-  VRControlException(const char *err) : std::string(err) {}
-};
+static std::string camera_calibration_path = "package://vrmagic_camera/calibrations/${NAME}.yaml";
 
 class VrMagicNode {
  public:
-  explicit VrMagicNode(const ros::NodeHandle &nh, vrmagic::CameraHandle * cam_);
+  explicit VrMagicNode(const ros::NodeHandle &nh, vrmagic::CameraHandle *cam_);
 
   ~VrMagicNode();
 
@@ -38,7 +29,7 @@ class VrMagicNode {
   void spin();
 
  private:
-  vrmagic::CameraHandle * cam;
+  vrmagic::CameraHandle *cam;
 
   ros::NodeHandle nh;
   ros::NodeHandle leftNs;
@@ -65,5 +56,6 @@ class VrMagicNode {
   std::string cameraConfUrlLeft;
   std::string cameraConfUrlRight;
 };
+}
 
 #endif

@@ -11,7 +11,7 @@
 
 using std::string;
 
-using vrmagic::CameraHandle;
+using namespace vrmagic;
 
 static const string ENABLE_LOGGING = "enable_logging";
 
@@ -30,6 +30,8 @@ static const string RIGHT_EXPOSURE = RIGHT + "exposure";
 static const int LEFT_PORT_DEFAULT = 1;
 static const int RIGHT_PORT_DEFAULT = 3;
 
+static sig_atomic_t volatile g_request_shutdown = 0;
+
 /**
  * Ros does not allow to get float, just double
  * @param  nh    The node handle to get from
@@ -44,10 +46,8 @@ static bool getFloatParam(const ros::NodeHandle nh, const string& key, float& va
   return status;
 }
 
-static void mySigIntHandler(int sig) {
-  vrmagic::cameraShutdown();
-  ros::requestShutdown();
-}
+// Replacement SIGINT handler
+static void mySigIntHandler(int sig) { g_request_shutdown = 1; }
 
 int main(int argc, char* argv[]) {
   ros::init(argc, argv, "vrmagic_camera", ros::init_options::NoSigintHandler);
@@ -78,7 +78,16 @@ int main(int argc, char* argv[]) {
 
   VrMagicNode node(nh, cam);
 
-  node.spin();
+  while (!g_request_shutdown) {
+    node.spin();
+    ros::spinOnce();
+  }
+
+  ROS_INFO("After shutdown");
+
+  vrmagic::cameraShutdown();
 
   delete cam;
+
+  ros::shutdown();
 }

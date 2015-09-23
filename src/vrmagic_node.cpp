@@ -1,13 +1,14 @@
+#include "vrmagic_node.hpp"
+
 #include <iostream>
 #include <sstream>
 
 #include <ros/ros.h>
 #include <ros/console.h>
 
-#include "vrmagic_node.hpp"
-
 using camera_info_manager::CameraInfoManager;
-using vrmagic::CameraHandle;
+
+namespace vrmagic {
 
 VrMagicNode::VrMagicNode(const ros::NodeHandle &nh_, CameraHandle *cam_) {
   nh = nh_;
@@ -22,8 +23,14 @@ VrMagicNode::VrMagicNode(const ros::NodeHandle &nh_, CameraHandle *cam_) {
   camPubLeft = image_transport::ImageTransport(leftNs).advertiseCamera("image_raw", 2);
   camPubRight = image_transport::ImageTransport(rightNs).advertiseCamera("image_raw", 2);
 
-  cinfoLeft = new CameraInfoManager(leftNs, camera_name_left, cameraConfUrlLeft);
-  cinfoRight = new CameraInfoManager(rightNs, camera_name_right, cameraConfUrlRight);
+  cinfoLeft = new CameraInfoManager(leftNs, "vrmagic_left", camera_calibration_path);
+  cinfoRight = new CameraInfoManager(rightNs, "vrmagic_right", camera_calibration_path);
+
+  cinfoLeft->loadCameraInfo(camera_calibration_path);
+  cinfoRight->loadCameraInfo(camera_calibration_path);
+
+  ROS_INFO("Left calibrated: %s", cinfoLeft->isCalibrated() ? "true" : "false");
+  ROS_INFO("Right calibrated: %s", cinfoRight->isCalibrated() ? "true" : "false");
 }
 
 VrMagicNode::~VrMagicNode() {
@@ -52,16 +59,5 @@ void VrMagicNode::broadcastFrame() {
   camPubRight.publish(rightImageMsg, rightCamInfo);
 }
 
-void VrMagicNode::spin() {
-  while (ros::ok()) {
-    try {
-      broadcastFrame();
-    } catch (VRGrabException &ex) {
-      std::cerr << ex << std::endl;
-    }
-    ros::spinOnce();
-
-    // boost::lock_guard<boost::mutex> lock(timerAccess);
-    // fpsLimit.sleep();
-  }
+void VrMagicNode::spin() { broadcastFrame(); }
 }

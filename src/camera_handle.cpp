@@ -188,7 +188,7 @@ void CameraHandle::setSingleProperty(int value, VRmPropId property, VRmDWORD por
   if (supported) {
     VRM_CHECK(VRmUsbCamSetPropertyValueI(device, property, &value));
     VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_INFO("%s changed to: %i ms", propInfo.m_description, value);
+    ROS_INFO("%s changed to: %i", propInfo.m_description, value);
   } else {
     VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
     ROS_WARN("Property '%s' not supported!", propInfo.m_description);

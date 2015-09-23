@@ -41,7 +41,7 @@ static sig_atomic_t volatile g_request_shutdown = 0;
  */
 static bool getFloatParam(const ros::NodeHandle nh, const string& key, float& value) {
   double tmp;
-  bool status = nh.getParam(LEFT_EXPOSURE, tmp);
+  bool status = nh.getParam(key, tmp);
   value = static_cast<float>(tmp);
   return status;
 }
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 
   // Set gain
   config.setGain = nh.getParam(LEFT_GAIN, config.gainLeft);
-  config.setGain |= nh.getParam(RIGHT_GAIN, config.gainLeft);
+  config.setGain |= nh.getParam(RIGHT_GAIN, config.gainRight);
 
   // Set exposure
   config.setExposure = getFloatParam(nh, LEFT_EXPOSURE, config.exposureLeft);

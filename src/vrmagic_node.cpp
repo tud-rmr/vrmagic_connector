@@ -52,7 +52,7 @@ void VrMagicNode::broadcastFrame() {
   leftCamInfo.header.frame_id = leftImageMsg.header.frame_id;
   leftCamInfo.width = leftImageMsg.width;
 
-  rightCamInfo = rightCamInfo->getCameraInfo();
+  rightCamInfo = cinfoRight->getCameraInfo();
   rightCamInfo.header.stamp = triggerTime;
   rightCamInfo.header.frame_id = rightImageMsg.header.frame_id;
   rightCamInfo.width = rightImageMsg.width;

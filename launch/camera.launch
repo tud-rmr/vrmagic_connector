@@ -10,9 +10,6 @@
 
 		<param name="left/exposure" value="5" />
 		<param name="right/exposure" value="5" />
-
-		<param name="camera_settings_url_left" value="vrmagic_left.yaml" />
-		<param name="camera_settings_url_right" value="vrmagic_left.yaml" />
 	</node>
 
 </launch>

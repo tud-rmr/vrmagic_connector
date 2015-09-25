@@ -34,6 +34,16 @@ from the catkin_ws root folder. This file also can be used to alter some paramet
 
 for the left or right image. You maybe have to include the namespace of your ROS core, depending on the configuration. If you do not find the correct topic name, just look at the published topics with tools like `rqt`.
 
+## Stereo proc
+
+In order to run the stereo image processing node, just run
+
+	ROS_NAMESPACE=vrmagic rosrun stereo_image_proc stereo_image_proc
+
+after (assumed the default namespace of the vrmagic node). It then publishes the rectified images under `/vrmagic/{left,right}/image_rect`. You have to have the camera calibrated first. With the stereo proc node running, you can enjoy the stereo view with the *image_view* package. To display both rectified cameras and the disparity image, run
+
+	rosrun image_view stereo_view stereo:=/vrmagic image:=image_rect
+
 ## Properties
 
 VRMagic USB camera has many properties, like gain or exposure, which can be set with the DevKit. There are two kinds of properties: Camera properties and sensor properties. Camera properties, like enabling the status LED, can only be set for the camera board itself. Sensor properties can be set for each sensor (left and right). The properties can currently be set via ROS parameter server. 

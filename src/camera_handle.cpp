@@ -60,19 +60,12 @@ void CameraHandle::initCamera() {
   // If a device is found, it is opened.
   openDevice();
 
-  // Activate the sensors of desire
-  setSensorActive(conf.portLeft);
-  setSensorActive(conf.portRight);
-
   // Get source format of the camera
   getSourceFormat();
 
   // Select a target format from the list of formats. The source image grabbed from the camera
   // will be converted to this format if possible.
   setTargetFormat();
-
-  // Setting the properties of the camera according to the configuration
-  setProperties();
 }
 
 void CameraHandle::openDevice() {
@@ -105,16 +98,6 @@ void CameraHandle::openDevice() {
   }
 
   ROS_INFO("Device opened");
-}
-
-/**
- * When setting properties, the sensor for which the properties should be set first has to
- * be activated with this function. Call it before setting parameters.
- * @param port The port number of the sensor
- */
-void CameraHandle::setSensorActive(VRmDWORD port) {
-  VRmPropId sensorProp = portnumToPropId(port);
-  VRmUsbCamSetPropertyValueE(device, VRM_PROPID_GRAB_SENSOR_PROPS_SELECT_E, &sensorProp);
 }
 
 void CameraHandle::getSourceFormat() {
@@ -153,168 +136,6 @@ void CameraHandle::setTargetFormat() {
            targetFormat.m_width,
            targetFormat.m_height,
            targetColorFormatStr);
-}
-
-void CameraHandle::setProperties() {
-  checkAndSanitizeConfig();
-
-  if (conf.setGain) setGain();
-  if (conf.setExposure) setExposure();
-}
-
-void CameraHandle::setGain() {
-  setPropertyLeftAndRight(conf.gainLeft, conf.gainRight, VRM_PROPID_CAM_GAIN_MONOCHROME_I);
-}
-
-void CameraHandle::setExposure() {
-  ROS_INFO("Set exposure");
-  setPropertyLeftAndRight(conf.exposureLeft, conf.exposureRight, VRM_PROPID_CAM_EXPOSURE_TIME_F);
-}
-
-template <typename T>
-void CameraHandle::setPropertyLeftAndRight(T valueLeft, T valueRight, VRmPropId property) {
-  setSingleProperty(valueLeft, property, conf.portLeft);
-  setSingleProperty(valueRight, property, conf.portRight);
-}
-
-void CameraHandle::setSingleProperty(int value, VRmPropId property, VRmDWORD port) {
-  VRmBOOL supported;
-  VRmPropInfo propInfo;
-
-  setSensorActive(port);
-
-  VRM_CHECK(VRmUsbCamGetPropertySupported(device, property, &supported));
-
-  if (supported) {
-    VRM_CHECK(VRmUsbCamSetPropertyValueI(device, property, &value));
-    VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_INFO("%s changed to: %i", propInfo.m_description, value);
-  } else {
-    VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_WARN("Property '%s' not supported!", propInfo.m_description);
-  }
-}
-
-void CameraHandle::setSingleProperty(float value, VRmPropId property, VRmDWORD port) {
-  VRmBOOL supported;
-  VRmPropInfo propInfo;
-
-  setSensorActive(port);
-
-  VRM_CHECK(VRmUsbCamGetPropertySupported(device, property, &supported));
-
-  if (supported) {
-    VRM_CHECK(VRmUsbCamSetPropertyValueF(device, property, &value));
-    VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_INFO("%s changed to: %f ms", propInfo.m_description, value);
-  } else {
-    VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_WARN("Property '%s' not supported!", propInfo.m_description);
-  }
-}
-
-void CameraHandle::setSingleProperty(bool value, VRmPropId property, VRmDWORD port) {
-  VRmBOOL supported;
-  VRmPropInfo propInfo;
-  unsigned int valAsInt = value;
-
-  setSensorActive(port);
-
-  VRM_CHECK(VRmUsbCamGetPropertySupported(device, property, &supported));
-
-  if (supported) {
-    VRM_CHECK(VRmUsbCamSetPropertyValueB(device, property, &valAsInt));
-    VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_INFO("%s changed to: %d ms", propInfo.m_description, value);
-  } else {
-    VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-    ROS_WARN("Property '%s' not supported!", propInfo.m_description);
-  }
-}
-
-// To check the configuration, the device has to be opnened before. That is because some properties
-// are platform dependent. If parameters are not in the right range, the default will be used. If a
-// parameter is not writeable, it will not be set.
-void CameraHandle::checkAndSanitizeConfig() {
-  // Check gain
-  checkAndSanitizeProperty(conf.gainLeft, VRM_PROPID_CAM_GAIN_MONOCHROME_I, "gainLeft");
-  checkAndSanitizeProperty(conf.gainRight, VRM_PROPID_CAM_GAIN_MONOCHROME_I, "gainRight");
-
-  // Check exposure
-  checkAndSanitizeProperty(conf.exposureLeft, VRM_PROPID_CAM_EXPOSURE_TIME_F, "exposureLeft");
-  checkAndSanitizeProperty(conf.exposureRight, VRM_PROPID_CAM_EXPOSURE_TIME_F, "exposureRight");
-}
-
-/**
- * [CameraHandle::checkAndSanitizeProperty description]
- * @param value    [description]
- * @param property [description]
- * @param name     [description]
- */
-void CameraHandle::checkAndSanitizeProperty(int& value, VRmPropId property, std::string name) {
-  VRmPropInfo propInfo;
-  VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-
-  if (VRM_PROP_TYPE_INT != propInfo.m_type) {
-    ROS_ERROR("Invalid type of property!");
-  }
-
-  VRmPropAttribsI attribs;
-  VRmUsbCamGetPropertyAttribsI(device, property, &attribs);
-  if (value < attribs.m_min || value > attribs.m_max) {
-    ROS_WARN("Invalid value for parameter %s, has to be in [%d,%d], but was: %d",
-             name.c_str(),
-             attribs.m_min,
-             attribs.m_max,
-             value);
-
-    ROS_WARN("Default will be used for %s: %d", name.c_str(), attribs.m_default);
-    value = attribs.m_default;
-  }
-}
-
-void CameraHandle::checkAndSanitizeProperty(float& value, VRmPropId property, std::string name) {
-  VRmPropInfo propInfo;
-  VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-
-  if (VRM_PROP_TYPE_FLOAT != propInfo.m_type) {
-    ROS_ERROR("Invalid type of property!");
-  }
-
-  VRmPropAttribsF attribs;
-  VRmUsbCamGetPropertyAttribsF(device, property, &attribs);
-  if (value < attribs.m_min || value > attribs.m_max) {
-    ROS_WARN("Invalid value for parameter %s, has to be in [%f,%f], but was: %f",
-             name.c_str(),
-             attribs.m_min,
-             attribs.m_max,
-             value);
-
-    ROS_WARN("Default will be used for %s: %f", name.c_str(), attribs.m_default);
-    value = attribs.m_default;
-  }
-}
-
-void CameraHandle::checkAndSanitizeProperty(bool& value, VRmPropId property, std::string name) {
-  VRmPropInfo propInfo;
-  VRM_CHECK(VRmUsbCamGetPropertyInfo(device, property, &propInfo));
-
-  if (VRM_PROP_TYPE_BOOL != propInfo.m_type) {
-    ROS_ERROR("Invalid type of property!");
-  }
-
-  VRmPropAttribsB attribs;
-  VRmUsbCamGetPropertyAttribsB(device, property, &attribs);
-  if (value < attribs.m_min || value > attribs.m_max) {
-    ROS_WARN("Invalid value for parameter %s, has to be in [%d,%d], but was: %d",
-             name.c_str(),
-             attribs.m_min,
-             attribs.m_max,
-             value);
-
-    ROS_WARN("Default will be used for %s: %s", name.c_str(), attribs.m_default ? "true" : "false");
-    value = attribs.m_default;
-  }
 }
 
 void CameraHandle::startCamera() {

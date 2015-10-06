@@ -32,23 +32,8 @@ struct Config {
   int portLeft;
   int portRight;
 
-  bool setGain;
-  int gainLeft;
-  int gainRight;
-
-  bool setExposure;
-  float exposureLeft;
-  float exposureRight;
-
   // Default values
-  Config()
-      : frameId("VRMAGIC"),
-        enableLogging(false),
-        timeout(5000),
-        portLeft(1),
-        portRight(3),
-        setGain(false),
-        setExposure(false) {}
+  Config() : frameId("VRMAGIC"), enableLogging(false), timeout(5000), portLeft(1), portRight(2) {}
 };
 
 void cameraShutdown();
@@ -72,25 +57,6 @@ class CameraHandle {
   void openDevice();
   void getSourceFormat();
   void setTargetFormat();
-
-  bool isPropertySupported(VRmPropId property);
-  void setSensorActive(VRmDWORD port);
-
-  void setProperties();
-  void checkAndSanitizeConfig();
-  void checkAndSanitizeProperty(int& value, VRmPropId property, std::string name);
-  void checkAndSanitizeProperty(float& value, VRmPropId property, std::string name);
-  void checkAndSanitizeProperty(bool& value, VRmPropId property, std::string name);
-
-  template <typename T>
-  void setPropertyLeftAndRight(T valueLeft, T valueRight, VRmPropId property);
-
-  void setSingleProperty(int value, VRmPropId property, VRmDWORD port);
-  void setSingleProperty(float value, VRmPropId property, VRmDWORD port);
-  void setSingleProperty(bool value, VRmPropId property, VRmDWORD port);
-
-  void setGain();
-  void setExposure();
 
   void startCamera();
 

@@ -4,12 +4,6 @@
 
 		<param name="left/port" value="1" />
 		<param name="right/port" value="2" />
-
-		<param name="left/gain" value="16" />
-		<param name="right/gain" value="16" />
-
-		<param name="left/exposure" value="5" />
-		<param name="right/exposure" value="5" />
 	</node>
 
 </launch>

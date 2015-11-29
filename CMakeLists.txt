@@ -31,7 +31,6 @@ include_directories(
 )
 
 link_directories( 
-    /home/jck/git/vrmagic_new/vrmagic_devkit/lib/
     ${Boost_LIBRARY_DIR}
 )
 

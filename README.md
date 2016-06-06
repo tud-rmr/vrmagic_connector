@@ -10,6 +10,60 @@ In general, you need to install the VRmUsbCam DevKit found on the [VRMagic homep
 
 As some problems occured while installing the DevKit side by side with ROS Jade, the following is a solution on how to circumvent problems with a conflicting Boost version. Try to install it according to the README first, as that is much less hacky.
 
+-ADD THE FOLLOWING LINE TO "/etc/apt/sources.list" (you will need to be in sudo to open the file with gedit, eventually):
+
+deb http://repository.imaging.vrmagic.com/packages/imaging/repository0/linux/debian precise contrib
+
+-TYPE IN A TERMINAL
+
+$ sudo apt-get update
+$ sudo apt-get install vrmagic-linux-pc-camera-runtime
+$ sudo apt-get install -f
+
+-INSTALL THE CUSTOM .DEB-FILE libvrmusbcam2-dev_3.5.0.0_amd64.deb (which will be provided by your tutor)
+
+-TYPE IN A TERMINAL
+
+$ cd ~/*YOUR_ROS_WORKSPACE*/src
+$ git clone https://github.com/Rentier/vrmagic_connector.git
+$ cd ..
+$ catkin_make
+
+-NEVER FORGET TO SOURCE YOUR WORKSPACE WITH:
+
+$ source *PATH_OF_YOUR_WORKSPACE*/devel/source.list
+
+-AND NEVER USE catkin_make IN ONE WORKSPACE, IF YOU HAVE AREADY SOURCE'D ANOTHER (don't hesitate to do it anyway, if you know what you are doing)
+
+This is how you start to publish raw pictures from your camera:
+
+-TYPE IN A TERMINAL
+
+$ cd ~/*YOUR_ROS_WORKSPACE*
+$ source *PATH_OF_YOUR_WORKSPACE*/devel/source.list
+$ roscore
+
+-TYPE IN SECOND TERMINAL
+
+$ cd ~/*YOUR_ROS_WORKSPACE*
+$ source *PATH_OF_YOUR_WORKSPACE*/devel/source.list
+$ roslaunch vrmagic_camera camera.launch
+
+-TYPE IN A THIRD TERMINAL
+
+$ cd ~/*YOUR_ROS_WORKSPACE*
+$ source *PATH_OF_YOUR_WORKSPACE*/devel/source.list
+$ rosrun rviz rviz   (In this application you can see the pictures from your cameras)
+
+
+-TROUBLESHOOTING:
+
+If 'roslaunch vrmagic_camera camera.launch' fails and the terminal mentions problems with the ports, you can open the file "camera.launch" and edit the ports by hand.
+
+ROBOT A - APOLLON - R2D2 > PORTS 1,3
+ROBOT B - BOREAS - C3PO > PORTS 1,2
+
+
 Append the following line to the file /etc/apt/sources.list:
 
 	deb http://repository.imaging.vrmagic.com/packages/imaging/repository0/linux/debian precise contrib

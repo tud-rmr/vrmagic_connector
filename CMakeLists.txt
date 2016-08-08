@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(vrmagic_camera)
 
-#catkin_package()
-
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -17,6 +15,13 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
+
+catkin_package(
+  INCLUDE_DIRS include
+#  LIBRARIES coop_uv
+  CATKIN_DEPENDS roscpp std_msgs sensor_msgs image_transport camera_info_manager
+#  DEPENDS system_lib
+)
 
 ###########
 ## Build ##
@@ -34,6 +39,11 @@ link_directories(
     ${Boost_LIBRARY_DIR}
 )
 
+set(${PROJECT_NAME}_HEADER_FILES
+    include/camera_handle.hpp
+    include/vrmagic_node.hpp
+)
+
 set(${PROJECT_NAME}_SOURCES
     src/main.cpp
     src/camera_handle.cpp
@@ -42,7 +52,7 @@ set(${PROJECT_NAME}_SOURCES
 
 
 ## Declare a cpp executable
-add_executable(vrmagic_camera_node  ${${PROJECT_NAME}_SOURCES})
+add_executable(vrmagic_camera_node  ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADER_FILES})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(vrmagic_camera_node

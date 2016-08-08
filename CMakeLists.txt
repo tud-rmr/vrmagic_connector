@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(vrmagic_camera)
 
-catkin_package()
+#catkin_package()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -30,7 +30,7 @@ include_directories(
   ${Boost_INCLUDE_DIR}
 )
 
-link_directories( 
+link_directories(
     ${Boost_LIBRARY_DIR}
 )
 
@@ -49,7 +49,7 @@ target_link_libraries(vrmagic_camera_node
   vrmusbcam2
    ${catkin_LIBRARIES}
    ${Boost_LIBRARIES}
-   
+
 )
 
 

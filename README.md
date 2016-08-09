@@ -90,7 +90,23 @@ for the left or right image. You maybe have to include the namespace of your ROS
 
 ## Calibration
 
-This camera driver supports the standard ROS calibration methods. The calibration is currently stored under `calibration` in the package itself.
+This camera driver supports the standard ROS calibration methods. The calibration is currently stored under `calibration` in the package itself. 
+
+Follow the following tutorial to calibrate the camera: 
+
+http://wiki.ros.org/camera_calibration/Tutorials/StereoCalibration
+
+In our lab we have a big checkerboard with the following parameters: --square 9x7 --size 0.1:
+
+   roslaunch vrmagic_camera camera.launch 
+   ROS_NAMESPACE=vrmagic rosrustereo_image_proc stereo_image_proc
+
+
+    rosrun camera_calibration cameracalibrator.py --size 9x7 --square 0.10 right:=/vrmagic/right/image_raw left:=/vrmagic/left/image_raw right_camera:=/vrmagic/right left_camera:=/vrmagic/left
+    
+    rosrun camera_calibration cameracalibrator.py --size 8x6 --square 0.035 right:=/vrmagic/right/image_raw left:=/vrmagic/left/image_raw right_camera:=/vrmagic/right left_camera:=/vrmagic/left
+    
+    rosrun camera_calibration cameracheck.py --size 8x6 --square 0.035 stereo:=/vrmagic image:=image_rect
 
 ## Stereo proc
 
